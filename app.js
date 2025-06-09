@@ -118,28 +118,33 @@ async function onSelectShelter(feature, listItem) {
   listItem.classList.add('selected');
 
   const [lng, lat] = feature.geometry.coordinates;
-  if (!userLocation) return;
 
-  const url = `https://api.mapbox.com/directions/v5/mapbox/walking/${userLocation[0]},${userLocation[1]};${lng},${lat}?geometries=geojson&alternatives=true&radiuses=100;100&access_token=${MAPBOX_TOKEN}`;
-  const res = await fetch(url);
-  const data = await res.json();
-
-  if (!data.routes || data.routes.length === 0) {
-    alert("ルートが見つかりませんでした。");
+  if (!userLocation) {
+    alert("ユーザー位置が取得できません。");
     return;
   }
 
-  const routeLine = turf.lineString(data.routes[0].geometry.coordinates); // fallback
-  let safeRoute = null;
+  // ルート検索API呼び出し（fetch版）
+  const url = `https://api.mapbox.com/directions/v5/mapbox/walking/${userLocation[0]},${userLocation[1]};${lng},${lat}?geometries=geojson&access_token=${MAPBOX_TOKEN}`;
+  
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
 
-  for (const route of data.routes) {
-    const line = turf.lineString(route.geometry.coordinates);
+    if (!data.routes || data.routes.length === 0) {
+      alert("ルートを取得できませんでした。");
+      return;
+    }
+
+    const routeCoords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+    const line = turf.lineString(data.routes[0].geometry.coordinates);
+
+    // 交差チェック（可視レイヤーに限定）
     let intersects = false;
-
     for (const key in layers) {
       if (map.hasLayer(layers[key])) {
         layers[key].eachLayer(layer => {
-          const polygon = layer.feature;
+          const polygon = layer.toGeoJSON();
           if (polygon && turf.booleanIntersects(line, polygon)) {
             intersects = true;
           }
@@ -147,16 +152,18 @@ async function onSelectShelter(feature, listItem) {
       }
     }
 
-    if (!intersects) {
-      safeRoute = line;
-      break;
-    }
-  }
+    if (routeLine) map.removeLayer(routeLine);
+    routeLine = L.polyline(routeCoords, { color: intersects ? 'red' : '#0066cc', weight: 5 }).addTo(map);
 
-  if (!safeRoute) {
-    alert("安全な避難ルートはありません。");
-    return;
+    if (intersects) {
+      alert("安全な避難ルートはありません（ルートがハザード区域と交差しています）。");
+    }
+
+  } catch (err) {
+    console.error("ルート取得エラー:", err);
+    alert("経路情報の取得中にエラーが発生しました。");
   }
+}
 
   if (routeLineLayer) map.removeLayer(routeLineLayer);
   routeLineLayer = L.geoJSON(safeRoute, {
