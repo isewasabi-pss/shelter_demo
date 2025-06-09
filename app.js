@@ -48,9 +48,9 @@ navigator.geolocation.getCurrentPosition(success => {
 });
 
 function loadAllGeoJSON() {
-  //loadHazardLayer('flood', 'data/flood.json', '#1f77b4');
-  //loadHazardLayer('sediment', 'data/sediment.json', '#ff7f0e');
-  //loadHazardLayer('tsunami', 'data/tsunami.json', '#d62728');
+  loadHazardLayer('flood', 'data/flood.json', '#1f77b4');
+  loadHazardLayer('sediment', 'data/sediment.json', '#ff7f0e');
+  loadHazardLayer('tsunami', 'data/tsunami.json', '#d62728');
   loadHazardLayer('inlandFlood', 'data/inland_flood.json', '#9467bd');
   loadShelters('data/shelters.json');
 }
@@ -118,33 +118,28 @@ async function onSelectShelter(feature, listItem) {
   listItem.classList.add('selected');
 
   const [lng, lat] = feature.geometry.coordinates;
+  if (!userLocation) return;
 
-  if (!userLocation) {
-    alert("ユーザー位置が取得できません。");
+  const url = `https://api.mapbox.com/directions/v5/mapbox/walking/${userLocation[0]},${userLocation[1]};${lng},${lat}?geometries=geojson&alternatives=true&radiuses=100;100&access_token=${MAPBOX_TOKEN}`;
+  const res = await fetch(url);
+  const data = await res.json();
+
+  if (!data.routes || data.routes.length === 0) {
+    alert("ルートが見つかりませんでした。");
     return;
   }
 
-  // ルート検索API呼び出し（fetch版）
-  const url = `https://api.mapbox.com/directions/v5/mapbox/walking/${userLocation[0]},${userLocation[1]};${lng},${lat}?geometries=geojson&access_token=${MAPBOX_TOKEN}`;
-  
-  try {
-    const res = await fetch(url);
-    const data = await res.json();
+  const routeLine = turf.lineString(data.routes[0].geometry.coordinates); // fallback
+  let safeRoute = null;
 
-    if (!data.routes || data.routes.length === 0) {
-      alert("ルートを取得できませんでした。");
-      return;
-    }
-
-    const routeCoords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
-    const line = turf.lineString(data.routes[0].geometry.coordinates);
-
-    // 交差チェック（可視レイヤーに限定）
+  for (const route of data.routes) {
+    const line = turf.lineString(route.geometry.coordinates);
     let intersects = false;
+
     for (const key in layers) {
       if (map.hasLayer(layers[key])) {
         layers[key].eachLayer(layer => {
-          const polygon = layer.toGeoJSON();
+          const polygon = layer.feature;
           if (polygon && turf.booleanIntersects(line, polygon)) {
             intersects = true;
           }
@@ -152,17 +147,19 @@ async function onSelectShelter(feature, listItem) {
       }
     }
 
-    if (routeLine) map.removeLayer(routeLine);
-    routeLine = L.polyline(routeCoords, { color: intersects ? 'red' : '#0066cc', weight: 5 }).addTo(map);
-
-    if (intersects) {
-      alert("安全な避難ルートはありません（ルートがハザード区域と交差しています）。");
+    if (!intersects) {
+      safeRoute = line;
+      break;
     }
-
-  } catch (err) {
-    console.error("ルート取得エラー:", err);
-    alert("経路情報の取得中にエラーが発生しました。");
   }
+
+if (!safeRoute) {
+  const warningBox = document.getElementById('route-warning');
+  warningBox.style.display = 'block';
+  setTimeout(() => {
+    warningBox.style.display = 'none';
+  }, 5000);
+  return;
 }
 
   if (routeLineLayer) map.removeLayer(routeLineLayer);
