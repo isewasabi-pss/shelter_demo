@@ -162,7 +162,7 @@ if (!safeRoute) {
   return;
 }
 
-  if (routeLineLayer) map.removeLayer(routeLineLayer);
+if (routeLineLayer) map.removeLayer(routeLineLayer);
   routeLineLayer = L.geoJSON(safeRoute, {
     style: { color: '#0066cc', weight: 5 }
   }).addTo(map);
