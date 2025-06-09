@@ -48,9 +48,9 @@ navigator.geolocation.getCurrentPosition(success => {
 });
 
 function loadAllGeoJSON() {
-  loadHazardLayer('flood', 'data/flood.json', '#1f77b4');
-  loadHazardLayer('sediment', 'data/sediment.json', '#ff7f0e');
-  loadHazardLayer('tsunami', 'data/tsunami.json', '#d62728');
+  //loadHazardLayer('flood', 'data/flood.json', '#1f77b4');
+  //loadHazardLayer('sediment', 'data/sediment.json', '#ff7f0e');
+  //loadHazardLayer('tsunami', 'data/tsunami.json', '#d62728');
   loadHazardLayer('inlandFlood', 'data/inland_flood.json', '#9467bd');
   loadShelters('data/shelters.json');
 }
