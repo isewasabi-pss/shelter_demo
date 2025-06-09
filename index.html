@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>福岡市ハザードマップ避難支援</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <script src="https://unpkg.com/@mapbox/mapbox-sdk/umd/mapbox-sdk.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+</head>
+<body>
+
+  <!-- 地図エリア -->
+  <div id="map"></div>
+
+  <!-- コントロールパネル（地図の外に配置） -->
+  <div id="control-panel">
+    <h2>ハザードマップ</h2>
+    <label><input type="checkbox" id="floodLayer"> 浸水想定</label><br/>
+    <label><input type="checkbox" id="sedimentLayer"> 土砂災害</label><br/>
+    <label><input type="checkbox" id="tsunamiLayer"> 津波</label><br/>
+    <label><input type="checkbox" id="inlandFloodLayer"> 内水氾濫</label><br/>
+
+    <h2>近くの避難所（1km以内）</h2>
+    <ul id="shelter-list"></ul>
+
+    <h2>凡例</h2>
+    <ul id="legend">
+      <li><span class="color-box" style="background:#1f77b4"></span> 浸水想定</li>
+      <li><span class="color-box" style="background:#ff7f0e"></span> 土砂災害</li>
+      <li><span class="color-box" style="background:#d62728"></span> 津波</li>
+      <li><span class="color-box" style="background:#9467bd"></span> 内水氾濫</li>
+    </ul>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
