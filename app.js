@@ -1,5 +1,5 @@
 // Mapbox APIキー
-const MAPBOX_TOKEN = 'pk.eyJ1IjoiaXNld2FzYWJpNzkiLCJhIjoiY21ibXZ6ZnkyMWkyNDJrcXRyMHllcjJjdSJ9.lJvdddvWUOb65jApYbW-ng';
+const MAPBOX_TOKEN = 'sk.eyJ1IjoiaXNld2FzYWJpNzkiLCJhIjoiY21ib2hlaHY0MXA2YTJzcXdyMTQ3M3AxdSJ9.phRJHBm138YkC5WqNSKVMA';
 mapboxgl.accessToken = MAPBOX_TOKEN;
 const mapboxClient = mapboxSdk({ accessToken: MAPBOX_TOKEN });
 
