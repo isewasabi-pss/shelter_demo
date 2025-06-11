@@ -12,7 +12,7 @@ const mapboxLayer = L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/streets
   maxZoom: 18
 });
 
-// 福岡市役所座標（経度, 緯度）
+// 初期位置の指定：福岡市役所座標（経度, 緯度）
 const fallbackCoords = [130.4209, 33.5902];
 
 const layers = {
@@ -47,6 +47,7 @@ navigator.geolocation.getCurrentPosition(success => {
   loadAllGeoJSON();
 });
 
+// ソースデータの指定
 function loadAllGeoJSON() {
   //loadHazardLayer('flood', 'data/flood.json', '#1f77b4');
   //loadHazardLayer('sediment', 'data/sediment.json', '#ff7f0e');
@@ -68,13 +69,16 @@ function loadHazardLayer(key, path, color) {
       });
     });
 
-  document.getElementById(`${key}Layer`).addEventListener('change', e => {
-    if (e.target.checked && layers[key]) {
-      map.addLayer(layers[key]);
-    } else if (layers[key]) {
-      map.removeLayer(layers[key]);
-    }
-  });
+  const checkbox = document.getElementById(`${key}Layer`);
+  if (checkbox) {
+    checkbox.addEventListener('change', e => {
+      if (e.target.checked && layers[key]) {
+        map.addLayer(layers[key]);
+      } else if (layers[key]) {
+        map.removeLayer(layers[key]);
+      }
+    });
+  }
 }
 
 function loadShelters(path) {
@@ -129,21 +133,25 @@ async function onSelectShelter(feature, listItem) {
     return;
   }
 
-  const routeLine = turf.lineString(data.routes[0].geometry.coordinates); // fallback
   let safeRoute = null;
 
-  for (const route of data.routes) {
+    for (const route of data.routes) {
     const line = turf.lineString(route.geometry.coordinates);
     let intersects = false;
 
     for (const key in layers) {
-      if (map.hasLayer(layers[key])) {
-        layers[key].eachLayer(layer => {
-          const polygon = layer.feature;
-          if (polygon && turf.booleanIntersects(line, polygon)) {
-            intersects = true;
-          }
-        });
+      const layer = layers[key];
+      if (layer && map.hasLayer(layer)) {
+        try {
+          layer.eachLayer(layerInstance => {
+            const polygon = layerInstance.feature;
+            if (polygon && turf.booleanIntersects(line, polygon)) {
+              intersects = true;
+            }
+          });
+        } catch (e) {
+          console.warn(`レイヤー ${key} の交差チェック中にエラーが発生しました`, e);
+        }
       }
     }
 
@@ -153,16 +161,19 @@ async function onSelectShelter(feature, listItem) {
     }
   }
 
-if (!safeRoute) {
-  const warningBox = document.getElementById('route-warning');
-  warningBox.style.display = 'block';
-  setTimeout(() => {
-    warningBox.style.display = 'none';
-  }, 5000);
-  return;
-}
+  if (!safeRoute) {
+    // 🔧【変更点3】HTMLボックスによる警告表示
+    const warningBox = document.getElementById('route-warning');
+    if (warningBox) {
+      warningBox.style.display = 'block';
+      setTimeout(() => {
+        warningBox.style.display = 'none';
+      }, 5000);
+    }
+    return;
+  }
 
-if (routeLineLayer) map.removeLayer(routeLineLayer);
+  if (routeLineLayer) map.removeLayer(routeLineLayer);
   routeLineLayer = L.geoJSON(safeRoute, {
     style: { color: '#0066cc', weight: 5 }
   }).addTo(map);
