@@ -13,7 +13,7 @@ const mapboxLayer = L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/streets
 });
 
 // 初期位置の指定：福岡市役所座標（経度, 緯度）
-const fallbackCoords = [130.4209, 33.5902];
+const fallbackCoords = [130.40497284981092, 33.60536368326338];
 
 const layers = {
   flood: null,
