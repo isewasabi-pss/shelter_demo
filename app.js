@@ -16,7 +16,8 @@ const mapboxLayer = L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/streets
 const fallbackCoords = [130.4209, 33.5902];
 
 const layers = {
-  flood: null,
+  flood_under50: null,
+  flood_over50: null,
   sediment: null,
   tsunami: null,
   inlandFlood: null
@@ -49,10 +50,11 @@ navigator.geolocation.getCurrentPosition(success => {
 
 // ソースデータの指定
 function loadAllGeoJSON() {
-  //loadHazardLayer('flood', 'data/flood.json', '#1f77b4');
-  //loadHazardLayer('sediment', 'data/sediment.json', '#ff7f0e');
-  //loadHazardLayer('tsunami', 'data/tsunami.json', '#d62728');
-  loadHazardLayer('inlandFlood', 'data/inland_flood.json', '#9467bd');
+  loadHazardLayer('flood_under50', 'data/flood_under50.geojson', '#1f77b4');
+  loadHazardLayer('flood_over50', 'data/flood_over50.geojson', '#ff7f0e');
+  loadHazardLayer('sediment', 'data/sediment.geojson', '#ff7f0e');
+  loadHazardLayer('tsunami', 'data/tsunami.geojson', '#d62728');
+  loadHazardLayer('inlandFlood', 'data/inland_flood.geojson', '#9467bd');
   loadShelters('data/shelters.json');
 }
 

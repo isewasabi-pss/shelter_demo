@@ -19,17 +19,19 @@
   <!-- コントロールパネル（地図の外に配置） -->
   <div id="control-panel">
     <h2>ハザードマップ</h2>
-    <label><input type="checkbox" id="floodLayer"> 浸水想定</label><br/>
-    <label><input type="checkbox" id="sedimentLayer"> 土砂災害</label><br/>
-    <label><input type="checkbox" id="tsunamiLayer"> 津波</label><br/>
-    <label><input type="checkbox" id="inlandFloodLayer"> 内水氾濫</label><br/>
+    <label><input type="checkbox" id="flood_under50Layer"> 浸水想定区域（〜50cm）</label><br/>
+    <label><input type="checkbox" id="flood_over50Layer"> 浸水想定区域（50cm〜）</label><br/>
+    <label><input type="checkbox" id="sedimentLayer"> 土砂災害警戒区域</label><br/>
+    <label><input type="checkbox" id="tsunamiLayer"> 津波浸水想定区域</label><br/>
+    <label><input type="checkbox" id="inlandFloodLayer"> 内水氾濫浸水想定区域</label><br/>
 
     <h2>近くの避難所（1km以内）</h2>
     <ul id="shelter-list"></ul>
 
     <h2>凡例</h2>
     <ul id="legend">
-      <li><span class="color-box" style="background:#1f77b4"></span> 浸水想定</li>
+      <li><span class="color-box" style="background:#1f77b4"></span> 浸水想定区域（〜50cm）</li>
+      <li><span class="color-box" style="background:#ffbb78"></span> 浸水想定区域（50cm〜）</li>
       <li><span class="color-box" style="background:#ff7f0e"></span> 土砂災害</li>
       <li><span class="color-box" style="background:#d62728"></span> 津波</li>
       <li><span class="color-box" style="background:#9467bd"></span> 内水氾濫</li>
