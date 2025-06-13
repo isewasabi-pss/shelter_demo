@@ -13,7 +13,7 @@ const mapboxLayer = L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/streets
 });
 
 // 初期位置の指定：福岡市役所座標（経度, 緯度）
-const fallbackCoords = [130.40497284981092, 33.60536368326338];
+const fallbackCoords = [130.4209, 33.5902];
 
 const layers = {
   flood: null,
@@ -90,7 +90,7 @@ function loadShelters(path) {
         const dist = distance(userLocation, [lon, lat]);
         return { ...f, distance_km: dist };
       }).sort((a, b) => a.distance_km - b.distance_km)
-        .slice(0, 10);
+        .slice(0, 20);
 
       const ul = document.getElementById('shelter-list');
       ul.innerHTML = '';
