@@ -190,3 +190,15 @@ function distance([lon1, lat1], [lon2, lat2]) {
             Math.sin(dLon/2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
+
+// 🔧【トグル追加】スマホメニューの開閉処理
+document.addEventListener('DOMContentLoaded', () => {
+  const toggleBtn = document.getElementById('toggle-panel-btn');
+  const panel = document.getElementById('control-panel');
+
+  if (toggleBtn && panel) {
+    toggleBtn.addEventListener('click', () => {
+      panel.classList.toggle('active');
+    });
+  }
+});
