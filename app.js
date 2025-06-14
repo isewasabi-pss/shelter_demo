@@ -28,6 +28,7 @@ let shelterLayer = null;
 let routeLine = null;
 let routeLineLayer = null;
 let shelterData = [];
+let selectedShelterMarker = null;
 
 const map = L.map('map', {
   center: [fallbackCoords[1], fallbackCoords[0]],
@@ -107,14 +108,24 @@ function loadShelters(path) {
       });
 
       if (shelterLayer) map.removeLayer(shelterLayer);
+
       shelterLayer = L.geoJSON(shelterData, {
-        pointToLayer: (f, latlng) => L.circleMarker(latlng, {
-          radius: 5,
-          fillColor: '#228B22',
-          color: '#006400',
-          weight: 1,
-          fillOpacity: 0.9
-        })
+        pointToLayer: (feature, latlng) => {
+          const type = feature.properties.type || '';
+          const name = feature.properties.name || '避難所';
+          const color = type.includes('緊急') ? '#d62728' : '#228B22'; // 赤/緑
+
+          const marker = L.circleMarker(latlng, {
+            radius: 5,
+            fillColor: color,
+            color: '#444',
+            weight: 1,
+            fillOpacity: 0.9
+          });
+
+          marker.bindPopup(name);  // 🔧【追加】ポップアップに名前表示
+          return marker;
+        }
       }).addTo(map);
     });
 }
@@ -125,6 +136,19 @@ async function onSelectShelter(feature, listItem) {
 
   const [lng, lat] = feature.geometry.coordinates;
   if (!userLocation) return;
+
+  if (selectedShelterMarker) {
+    map.removeLayer(selectedShelterMarker);
+    selectedShelterMarker = null;
+  }
+
+  // 選択された避難所をハイライト
+  selectedShelterMarker = L.circleMarker([lat, lng], {
+    radius: 10,
+    color: '#3399ff',
+    weight: 3,
+    fillOpacity: 0.6
+  }).addTo(map);
 
   const url = `https://api.mapbox.com/directions/v5/mapbox/walking/${userLocation[0]},${userLocation[1]};${lng},${lat}?geometries=geojson&alternatives=true&radiuses=100;100&access_token=${MAPBOX_TOKEN}`;
   const res = await fetch(url);
