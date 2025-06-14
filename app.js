@@ -29,6 +29,7 @@ let routeLine = null;
 let routeLineLayer = null;
 let shelterData = [];
 let selectedShelterMarker = null;
+let selectedShelterFeature = null;
 
 const map = L.map('map', {
   center: [fallbackCoords[1], fallbackCoords[0]],
@@ -80,6 +81,19 @@ function loadHazardLayer(key, path, color) {
       } else if (layers[key]) {
         map.removeLayer(layers[key]);
       }
+
+      // レイヤー変更時、経路とハイライトをリセット
+      if (routeLineLayer) {
+        map.removeLayer(routeLineLayer);
+        routeLineLayer = null;
+      }
+      if (selectedShelterMarker) {
+        map.removeLayer(selectedShelterMarker);
+        selectedShelterMarker = null;
+      }
+      selectedShelterFeature = null;
+      document.getElementById('route-search-btn').style.display = 'none';
+      document.querySelectorAll('#shelter-list li').forEach(li => li.classList.remove('selected'));
     });
   }
 }
@@ -113,8 +127,7 @@ function loadShelters(path) {
         pointToLayer: (feature, latlng) => {
           const type = feature.properties.type || '';
           const name = feature.properties.name || '避難所';
-          const color = type.includes('緊急') ? '#d62728' : '#228B22'; // 赤/緑
-
+          const color = type.includes('緊急') ? '#d62728' : '#228B22'; 
           const marker = L.circleMarker(latlng, {
             radius: 5,
             fillColor: color,
@@ -122,15 +135,14 @@ function loadShelters(path) {
             weight: 1,
             fillOpacity: 0.9
           });
-
-          marker.bindPopup(name);  // 🔧【追加】ポップアップに名前表示
+          marker.bindPopup(name);  // ポップアップに名前表示
           return marker;
         }
       }).addTo(map);
     });
 }
 
-async function onSelectShelter(feature, listItem) {
+function onSelectShelter(feature, listItem) {
   document.querySelectorAll('#shelter-list li').forEach(li => li.classList.remove('selected'));
   listItem.classList.add('selected');
 
@@ -150,45 +162,52 @@ async function onSelectShelter(feature, listItem) {
     fillOpacity: 0.6
   }).addTo(map);
 
+  // 選択された避難所の情報を保持
+  selectedShelterFeature = feature;
+  // 「経路検索」ボタンを表示
+  document.getElementById('route-search-btn').style.display = 'block';
+}
+
+async function searchRouteToShelter(feature) {
+  const [lng, lat] = feature.geometry.coordinates;
+  if (!userLocation) return;
+
   const url = `https://api.mapbox.com/directions/v5/mapbox/walking/${userLocation[0]},${userLocation[1]};${lng},${lat}?geometries=geojson&alternatives=true&radiuses=100;100&access_token=${MAPBOX_TOKEN}`;
   const res = await fetch(url);
   const data = await res.json();
 
-  if (!data.routes || data.routes.length === 0) {
-    alert("ルートが見つかりませんでした。");
-    return;
-  }
-
   let safeRoute = null;
 
+  if (data.routes && data.routes.length > 0) {
     for (const route of data.routes) {
-    const line = turf.lineString(route.geometry.coordinates);
-    let intersects = false;
+      const line = turf.lineString(route.geometry.coordinates);
+      let intersects = false;
 
-    for (const key in layers) {
-      const layer = layers[key];
-      if (layer && map.hasLayer(layer)) {
-        try {
-          layer.eachLayer(layerInstance => {
-            const polygon = layerInstance.feature;
-            if (polygon && turf.booleanIntersects(line, polygon)) {
-              intersects = true;
-            }
-          });
-        } catch (e) {
-          console.warn(`レイヤー ${key} の交差チェック中にエラーが発生しました`, e);
+      for (const key in layers) {
+        const layer = layers[key];
+        if (layer && map.hasLayer(layer)) {
+          try {
+            layer.eachLayer(layerInstance => {
+              const polygon = layerInstance.feature;
+              if (polygon && turf.booleanIntersects(line, polygon)) {
+                intersects = true;
+              }
+            });
+          } catch (e) {
+            console.warn(`レイヤー ${key} の交差チェック中にエラーが発生しました`, e);
+          }
         }
       }
-    }
 
-    if (!intersects) {
-      safeRoute = line;
-      break;
+      if (!intersects) {
+        safeRoute = line;
+        break;
+      }
     }
   }
 
+  // 🔧 安全ルートが見つからなかった場合の警告処理（共通化）
   if (!safeRoute) {
-    // 🔧【変更点3】HTMLボックスによる警告表示
     const warningBox = document.getElementById('route-warning');
     if (warningBox) {
       warningBox.style.display = 'block';
@@ -199,7 +218,12 @@ async function onSelectShelter(feature, listItem) {
     return;
   }
 
-  if (routeLineLayer) map.removeLayer(routeLineLayer);
+  // 🔧 表示前に前のルートを削除
+  if (routeLineLayer) {
+    map.removeLayer(routeLineLayer);
+  }
+
+  // 🔧 安全な経路を表示
   routeLineLayer = L.geoJSON(safeRoute, {
     style: { color: '#0066cc', weight: 5 }
   }).addTo(map);
@@ -215,14 +239,22 @@ function distance([lon1, lat1], [lon2, lat2]) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-// 🔧【トグル追加】スマホメニューの開閉処理
 document.addEventListener('DOMContentLoaded', () => {
   const toggleBtn = document.getElementById('toggle-panel-btn');
   const panel = document.getElementById('control-panel');
+  const routeBtn = document.getElementById('route-search-btn');
 
   if (toggleBtn && panel) {
     toggleBtn.addEventListener('click', () => {
       panel.classList.toggle('active');
+    });
+  }
+
+  if (routeBtn) {
+    routeBtn.addEventListener('click', () => {
+      if (selectedShelterFeature) {
+        searchRouteToShelter(selectedShelterFeature);
+      }
     });
   }
 });
