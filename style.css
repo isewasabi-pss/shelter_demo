@@ -128,3 +128,17 @@ html, body {
   font-weight: bold;
   cursor: pointer;
 }
+
+.hazard-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0;
+}
+
+.color-box {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #aaa;
+}

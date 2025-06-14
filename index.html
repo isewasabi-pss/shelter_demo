@@ -19,33 +19,53 @@
   <!-- スマホ用メニューボタン -->
   <button id="toggle-panel-btn">☰ 凡例</button>
 
-  <!-- コントロールパネル（地図の外に配置） -->
+  <!-- コントロールパネル -->
   <div id="control-panel">
     <h2>ハザードマップ</h2>
-    <label><input type="checkbox" id="flood_under50Layer"> 浸水想定区域（〜50cm）</label><br/>
-    <label><input type="checkbox" id="flood_over50Layer"> 浸水想定区域（50cm〜）</label><br/>
-    <label><input type="checkbox" id="sedimentLayer"> 土砂災害警戒区域</label><br/>
-    <label><input type="checkbox" id="tsunamiLayer"> 津波浸水想定区域</label><br/>
-    <label><input type="checkbox" id="inlandFloodLayer"> 内水氾濫浸水想定区域</label><br/>
+
+    <!-- ✅ label構造修正済み（カラーボックス付き） -->
+    <label class="hazard-item">
+      <input type="checkbox" id="flood_under50Layer" />
+      <span class="color-box" style="background:#F6F599"></span>
+      浸水想定区域（〜50cm）
+    </label><br/>
+
+    <label class="hazard-item">
+      <input type="checkbox" id="flood_over50Layer" />
+      <span class="color-box" style="background:#FFCEB3"></span>
+      浸水想定区域（50cm〜）
+    </label><br/>
+
+    <label class="hazard-item">
+      <input type="checkbox" id="sedimentLayer" />
+      <span class="color-box" style="background:#F61F15"></span>
+      土砂災害警戒区域
+    </label><br/>
+
+    <label class="hazard-item">
+      <input type="checkbox" id="tsunamiLayer" />
+      <span class="color-box" style="background:#FFFFAA"></span>
+      津波浸水想定区域
+    </label><br/>
+
+    <label class="hazard-item">
+      <input type="checkbox" id="inlandFloodLayer" />
+      <span class="color-box" style="background:#FFFFAA"></span>
+      内水氾濫浸水想定区域
+    </label><br/>
+
+    <!-- ✅ 経路検索ボタンをリストの上に配置 -->
+    <button id="route-search-btn" style="display: none;">経路を表示</button>
 
     <h2>近くの避難所（最寄りの20件）</h2>
     <ul id="shelter-list"></ul>
-    
-    <button id="route-search-btn" style="display: none;">経路を表示</button>
-
-    <h2>凡例</h2>
-    <ul id="legend">
-      <li><span class="color-box" style="background:#1f77b4"></span> 浸水想定区域（〜50cm）</li>
-      <li><span class="color-box" style="background:#ffbb78"></span> 浸水想定区域（50cm〜）</li>
-      <li><span class="color-box" style="background:#ff7f0e"></span> 土砂災害</li>
-      <li><span class="color-box" style="background:#d62728"></span> 津波</li>
-      <li><span class="color-box" style="background:#9467bd"></span> 内水氾濫</li>
-    </ul>
   </div>
-<div id="route-warning" style="display: none; position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
-  background-color: #f44336; color: white; padding: 10px 20px; border-radius: 4px; z-index: 1000;">
-  安全な避難ルートはありません（ルートがハザード区域と交差しています）。
-</div>
-<script src="app.js" defer></script>
+
+  <div id="route-warning" style="display: none; position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+    background-color: #f44336; color: white; padding: 10px 20px; border-radius: 4px; z-index: 1000;">
+    安全な避難ルートはありません。
+  </div>
+
+  <script src="app.js" defer></script>
 </body>
 </html>

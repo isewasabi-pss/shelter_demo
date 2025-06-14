@@ -30,6 +30,7 @@ let routeLineLayer = null;
 let shelterData = [];
 let selectedShelterMarker = null;
 let selectedShelterFeature = null;
+let userLocationMarker = null;
 
 const map = L.map('map', {
   center: [fallbackCoords[1], fallbackCoords[0]],
@@ -46,17 +47,34 @@ navigator.geolocation.getCurrentPosition(success => {
 }, error => {
   userLocation = fallbackCoords;
   map.setView([fallbackCoords[1], fallbackCoords[0]], 14);
-  L.circleMarker([fallbackCoords[1], fallbackCoords[0]], { radius: 6, color: 'blue' }).addTo(map);
+  userLocationMarker = L.marker([fallbackCoords[1], fallbackCoords[0]], {
+    draggable: true,
+    icon: L.icon({
+      iconUrl: 'https://cdn.jsdelivr.net/gh/pointhi/leaflet-color-markers@master/img/marker-icon-blue.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
+    })
+  }).addTo(map).bindPopup("ここを動かして出発位置を変更できます").openPopup();
+
+  // 🔧 ドラッグ終了後に userLocation を更新
+  userLocationMarker.on("dragend", (e) => {
+    const newPos = e.target.getLatLng();
+    userLocation = [newPos.lng, newPos.lat];
+    loadShelters('data/shelters.json'); // 避難所データを再読み込み
+  });
+  
   loadAllGeoJSON();
 });
 
 // ソースデータの指定
 function loadAllGeoJSON() {
-  loadHazardLayer('flood_under50', 'data/flood_under50.geojson', '#1f77b4');
-  loadHazardLayer('flood_over50', 'data/flood_over50.geojson', '#ff7f0e');
-  loadHazardLayer('sediment', 'data/sediment.geojson', '#ff7f0e');
-  loadHazardLayer('tsunami', 'data/tsunami.geojson', '#d62728');
-  loadHazardLayer('inlandFlood', 'data/inland_flood.geojson', '#9467bd');
+  loadHazardLayer('flood_under50', 'data/flood_under50.geojson', '#F6F599');
+  loadHazardLayer('flood_over50', 'data/flood_over50.geojson', '#FFCEB3');
+  loadHazardLayer('sediment', 'data/sediment.geojson', '#F61F15');
+  loadHazardLayer('tsunami', 'data/tsunami.geojson', '#FFFFAA');
+  loadHazardLayer('inlandFlood', 'data/inland_flood.geojson', '#FFFFAA');
   loadShelters('data/shelters.json');
 }
 
