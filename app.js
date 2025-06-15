@@ -190,41 +190,60 @@ async function searchRouteToShelter(feature) {
   const [lng, lat] = feature.geometry.coordinates;
   if (!userLocation) return;
 
-  const url = `https://api.mapbox.com/directions/v5/mapbox/walking/${userLocation[0]},${userLocation[1]};${lng},${lat}?geometries=geojson&alternatives=true&radiuses=100;100&access_token=${MAPBOX_TOKEN}`;
-  const res = await fetch(url);
-  const data = await res.json();
+  const candidateMidpoints = [
+    [lng + 0.01, lat + 0.01], // 北東方向に回り込む
+    [lng - 0.01, lat + 0.01], // 北西方向
+    [lng + 0.01, lat - 0.01], // 南東方向
+    [lng - 0.01, lat - 0.01], // 南西方向
+    null // 通常の最短ルートも最後に試す
+  ];
 
   let safeRoute = null;
 
-  if (data.routes && data.routes.length > 0) {
-    for (const route of data.routes) {
-      const line = turf.lineString(route.geometry.coordinates);
-      let intersects = false;
+  for (const midpoint of candidateMidpoints) {
+    let coordStr = '';
+    if (midpoint) {
+      coordStr = `${userLocation[0]},${userLocation[1]};${midpoint[0]},${midpoint[1]};${lng},${lat}`;
+    } else {
+      coordStr = `${userLocation[0]},${userLocation[1]};${lng},${lat}`;
+    }
 
-      for (const key in layers) {
-        const layer = layers[key];
-        if (layer && map.hasLayer(layer)) {
-          try {
-            layer.eachLayer(layerInstance => {
-              const polygon = layerInstance.feature;
-              if (polygon && turf.booleanIntersects(line, polygon)) {
-                intersects = true;
-              }
-            });
-          } catch (e) {
-            console.warn(`レイヤー ${key} の交差チェック中にエラーが発生しました`, e);
+    const url = `https://api.mapbox.com/directions/v5/mapbox/walking/${coordStr}?geometries=geojson&alternatives=true&radiuses=300;300;300&access_token=${MAPBOX_TOKEN}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (data.routes && data.routes.length > 0) {
+      for (const route of data.routes) {
+        const line = turf.lineString(route.geometry.coordinates);
+        let intersects = false;
+
+        for (const key in layers) {
+          const layer = layers[key];
+          if (layer && map.hasLayer(layer)) {
+            try {
+              layer.eachLayer(layerInstance => {
+                const polygon = layerInstance.feature;
+                if (polygon && turf.booleanIntersects(line, polygon)) {
+                  intersects = true;
+                }
+              });
+            } catch (e) {
+              console.warn(`レイヤー ${key} の交差チェック中にエラーが発生しました`, e);
+            }
           }
         }
-      }
 
-      if (!intersects) {
-        safeRoute = line;
-        break;
+        if (!intersects) {
+          safeRoute = line;
+          break;
+        }
       }
     }
+
+    if (safeRoute) break;
   }
 
-  // 🔧 安全ルートが見つからなかった場合の警告処理（共通化）
+  // 警告表示
   if (!safeRoute) {
     const warningBox = document.getElementById('route-warning');
     if (warningBox) {
@@ -236,16 +255,17 @@ async function searchRouteToShelter(feature) {
     return;
   }
 
-  // 🔧 表示前に前のルートを削除
+  // 既存ルート削除
   if (routeLineLayer) {
     map.removeLayer(routeLineLayer);
   }
 
-  // 🔧 安全な経路を表示
+  // 新ルート描画
   routeLineLayer = L.geoJSON(safeRoute, {
     style: { color: '#0066cc', weight: 5 }
   }).addTo(map);
 }
+
 
 function distance([lon1, lat1], [lon2, lat2]) {
   const R = 6371;
