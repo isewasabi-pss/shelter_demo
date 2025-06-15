@@ -191,10 +191,10 @@ async function searchRouteToShelter(feature) {
   if (!userLocation) return;
 
   const candidateMidpoints = [
-    [lng + 0.01, lat + 0.01], // 北東方向に回り込む
-    [lng - 0.01, lat + 0.01], // 北西方向
-    [lng + 0.01, lat - 0.01], // 南東方向
-    [lng - 0.01, lat - 0.01], // 南西方向
+    [lng + 0.001, lat + 0.001], // 北東方向に回り込む
+    [lng - 0.001, lat + 0.001], // 北西方向
+    [lng + 0.001, lat - 0.001], // 南東方向
+    [lng - 0.001, lat - 0.001], // 南西方向
     null // 通常の最短ルートも最後に試す
   ];
 
