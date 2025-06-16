@@ -245,7 +245,7 @@ polygons.forEach(polygonCoords => {
 // 距離の近い順に最大20件まで採用
 const limitedPolygons = candidatePolygons
   .sort((a, b) => a.distance - b.distance)
-  .slice(0, 10)
+  .slice(0, 5)
   .map(p => p.coordinates);
 
 // デバッグ表示
