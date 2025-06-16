@@ -1,0 +1,3 @@
+[build]
+  publish = "."  # index.html や app.js がある場所
+  functions = "netlify/functions"  # Functionsの配置パス
