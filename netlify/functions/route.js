@@ -23,6 +23,7 @@ exports.handler = async (event) => {
   }
 
   try {
+    console.log('📥 Incoming event.body:', event.body);
     const body = JSON.parse(event.body);
 
     const res = await fetch('https://api.openrouteservice.org/v2/directions/foot-walking/geojson', {
@@ -34,13 +35,17 @@ exports.handler = async (event) => {
       body: JSON.stringify(body)
     });
 
-    const data = await res.text();
+    const resultText = await res.text();
+
+    console.log('📨 ORS Response Status:', res.status);
+    console.log('📨 ORS Response Body:', resultText);
+
     return {
       statusCode: res.status,
       headers: {
         'Access-Control-Allow-Origin': '*'
       },
-      body: data
+      body: resultText
     };
 
   } catch (err) {
