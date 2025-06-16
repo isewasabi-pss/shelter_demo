@@ -187,64 +187,114 @@ function onSelectShelter(feature, listItem) {
 }
 
 async function searchRouteToShelter(feature) {
-  const [lng, lat] = feature.geometry.coordinates;
   if (!userLocation) return;
 
-  const url = `https://api.mapbox.com/directions/v5/mapbox/walking/${userLocation[0]},${userLocation[1]};${lng},${lat}?geometries=geojson&alternatives=true&radiuses=100;100&access_token=${MAPBOX_TOKEN}`;
-  const res = await fetch(url);
-  const data = await res.json();
+  const [destLng, destLat] = feature.geometry.coordinates;
 
-  let safeRoute = null;
-
-  if (data.routes && data.routes.length > 0) {
-    for (const route of data.routes) {
-      const line = turf.lineString(route.geometry.coordinates);
-      let intersects = false;
-
-      for (const key in layers) {
-        const layer = layers[key];
-        if (layer && map.hasLayer(layer)) {
-          try {
-            layer.eachLayer(layerInstance => {
-              const polygon = layerInstance.feature;
-              if (polygon && turf.booleanIntersects(line, polygon)) {
-                intersects = true;
-              }
-            });
-          } catch (e) {
-            console.warn(`レイヤー ${key} の交差チェック中にエラーが発生しました`, e);
-          }
+  // 表示中のハザードレイヤのポリゴンを収集
+  let polygons = [];
+  for (const key in layers) {
+    const layer = layers[key];
+    if (layer && map.hasLayer(layer)) {
+      layer.eachLayer(layerInstance => {
+        const geo = layerInstance.toGeoJSON();
+        if (geo.geometry.type === 'Polygon') {
+          polygons.push(geo.geometry.coordinates);
+        } else if (geo.geometry.type === 'MultiPolygon') {
+          geo.geometry.coordinates.forEach(poly => polygons.push(poly));
         }
-      }
-
-      if (!intersects) {
-        safeRoute = line;
-        break;
-      }
+      });
     }
   }
+  // turfでポリゴンを簡素化
+const simplifiedPolygons = [];
 
-  // 🔧 安全ルートが見つからなかった場合の警告処理（共通化）
-  if (!safeRoute) {
-    const warningBox = document.getElementById('route-warning');
-    if (warningBox) {
-      warningBox.style.display = 'block';
-      setTimeout(() => {
-        warningBox.style.display = 'none';
-      }, 5000);
+// ポリゴンを距離つきで一時配列に
+const filtered = [];
+polygons.forEach(polygonCoords => {
+  try {
+    const turfPolygon = turf.polygon(polygonCoords);
+    const centroid = turf.centroid(turfPolygon);
+    const distanceKm = turf.distance(
+      turf.point(userLocation), centroid, { units: 'kilometers' }
+    );
+
+    if (distanceKm <= 1.5) { // ← 半径1.5km以内のみ対象
+      const simplified = turf.simplify(turfPolygon, {
+        tolerance: 0.0005,
+        highQuality: false
+      });
+
+      if (
+        simplified.geometry &&
+        (simplified.geometry.type === 'Polygon' || simplified.geometry.type === 'MultiPolygon')
+      ) {
+        filtered.push({
+          coordinates: simplified.geometry.coordinates,
+          distance: distanceKm
+        });
+      }
     }
-    return;
+  } catch (e) {
+    console.warn('ポリゴン処理エラー:', e);
   }
+});
 
-  // 🔧 表示前に前のルートを削除
-  if (routeLineLayer) {
-    map.removeLayer(routeLineLayer);
-  }
+// 距離が近い順にして30個まで使う
+const limitedPolygons = filtered
+  .sort((a, b) => a.distance - b.distance)
+  .slice(0, 30)
+  .map(p => p.coordinates);
 
-  // 🔧 安全な経路を表示
-  routeLineLayer = L.geoJSON(safeRoute, {
+console.log('送信ポリゴン数（距離フィルタ＋30件まで）:', limitedPolygons.length);
+
+const body = {
+  coordinates: [
+    [userLocation[0], userLocation[1]],
+    [destLng, destLat]
+  ],
+  format: 'geojson',
+  instructions: false
+};
+
+if (limitedPolygons.length > 0) {
+  body.options = {
+    avoid_polygons: {
+      type: 'MultiPolygon',
+      coordinates: limitedPolygons
+    }
+  };
+}
+
+try {
+  const orsRes = await fetch('https://shelterdemo.netlify.app/.netlify/functions/route', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  });
+
+  if (!orsRes.ok) throw new Error('ORS APIエラー');
+  const geojson = await orsRes.json();
+
+  if (routeLineLayer) map.removeLayer(routeLineLayer);
+  routeLineLayer = L.geoJSON(geojson, {
     style: { color: '#0066cc', weight: 5 }
   }).addTo(map);
+
+  document.getElementById('route-warning').style.display = 'none';
+
+} catch (err) {
+  console.error(err);
+  const warningBox = document.getElementById('route-warning');
+  if (warningBox) {
+    warningBox.style.display = 'block';
+    setTimeout(() => {
+      warningBox.style.display = 'none';
+    }, 5000);
+  }
+}
 }
 
 function distance([lon1, lat1], [lon2, lat2]) {
