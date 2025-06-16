@@ -211,43 +211,47 @@ const simplifiedPolygons = [];
 
 // ポリゴンを距離つきで一時配列に
 const filtered = [];
+// 出発地点と目的地を結ぶ直線
+const line = turf.lineString([
+  [userLocation[0], userLocation[1]],
+  [destLng, destLat]
+]);
+
+// 回避ポリゴン候補を収集（交差＋距離フィルタ）
+const candidatePolygons = [];
 polygons.forEach(polygonCoords => {
   try {
     const turfPolygon = turf.polygon(polygonCoords);
+    const simplified = turf.simplify(turfPolygon, {
+      tolerance: 0.001,
+      highQuality: false
+    });
+
+    const intersects = turf.booleanIntersects(line, simplified);
     const centroid = turf.centroid(turfPolygon);
-    const distanceKm = turf.distance(
-      turf.point(userLocation), centroid, { units: 'kilometers' }
-    );
+    const distanceKm = turf.distance(turf.point(userLocation), centroid, { units: 'kilometers' });
 
-    if (distanceKm <= 1.5) { // ← 半径1.5km以内のみ対象
-      const simplified = turf.simplify(turfPolygon, {
-        tolerance: 0.0005,
-        highQuality: false
+    if (intersects && distanceKm <= 1.5) {
+      candidatePolygons.push({
+        coordinates: simplified.geometry.coordinates,
+        distance: distanceKm
       });
-
-      if (
-        simplified.geometry &&
-        (simplified.geometry.type === 'Polygon' || simplified.geometry.type === 'MultiPolygon')
-      ) {
-        filtered.push({
-          coordinates: simplified.geometry.coordinates,
-          distance: distanceKm
-        });
-      }
     }
   } catch (e) {
     console.warn('ポリゴン処理エラー:', e);
   }
 });
 
-// 距離が近い順にして30個まで使う
-const limitedPolygons = filtered
+// 距離の近い順に最大20件まで採用
+const limitedPolygons = candidatePolygons
   .sort((a, b) => a.distance - b.distance)
-  .slice(0, 30)
+  .slice(0, 10)
   .map(p => p.coordinates);
 
-console.log('送信ポリゴン数（距離フィルタ＋30件まで）:', limitedPolygons.length);
+// デバッグ表示
+console.log('送信ポリゴン数（交差＋距離フィルタ後）:', limitedPolygons.length);
 
+// ORS APIに送信するルートリクエスト
 const body = {
   coordinates: [
     [userLocation[0], userLocation[1]],
