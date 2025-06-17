@@ -27,6 +27,7 @@ let userLocation = null;
 let shelterLayer = null;
 let routeLine = null;
 let routeLineLayer = null;
+let selectedShelter = null;
 let shelterData = [];
 let selectedShelterMarker = null;
 let selectedShelterFeature = null;
@@ -100,18 +101,12 @@ function loadHazardLayer(key, path, color) {
         map.removeLayer(layers[key]);
       }
 
-      // レイヤー変更時、経路とハイライトをリセット
+      // レイヤー変更時、経路とハイライトをリセット、避難施設の選択は保持
       if (routeLineLayer) {
         map.removeLayer(routeLineLayer);
         routeLineLayer = null;
       }
-      if (selectedShelterMarker) {
-        map.removeLayer(selectedShelterMarker);
-        selectedShelterMarker = null;
-      }
-      selectedShelterFeature = null;
-      document.getElementById('route-search-btn').style.display = 'none';
-      document.querySelectorAll('#shelter-list li').forEach(li => li.classList.remove('selected'));
+
     });
   }
 }
@@ -137,6 +132,10 @@ function loadShelters(path) {
         li.textContent = `${name}（${dist}km）`;
         li.addEventListener('click', () => onSelectShelter(f, li));
         ul.appendChild(li);
+        // ✅ 選択状態を復元
+        if (selectedShelterFeature && selectedShelterFeature.properties.name === f.properties.name) {
+          li.classList.add('selected');
+        }
       });
 
       if (shelterLayer) map.removeLayer(shelterLayer);
@@ -157,6 +156,19 @@ function loadShelters(path) {
           return marker;
         }
       }).addTo(map);
+      // ✅ すでに選択済み避難所がある場合はマーカーを再描画
+      if (selectedShelterFeature) {
+        const [lng, lat] = selectedShelterFeature.geometry.coordinates;
+        if (selectedShelterMarker) {
+          map.removeLayer(selectedShelterMarker);
+        }
+        selectedShelterMarker = L.circleMarker([lat, lng], {
+          radius: 10,
+          color: '#3399ff',
+          weight: 3,
+          fillOpacity: 0.6
+        }).addTo(map);
+      }
     });
 }
 
@@ -242,7 +254,7 @@ polygons.forEach(polygonCoords => {
   }
 });
 
-// 距離の近い順に最大20件まで採用
+// 距離の近い順に最大5件まで採用
 const limitedPolygons = candidatePolygons
   .sort((a, b) => a.distance - b.distance)
   .slice(0, 5)
@@ -286,6 +298,19 @@ try {
   routeLineLayer = L.geoJSON(geojson, {
     style: { color: '#0066cc', weight: 5 }
   }).addTo(map);
+  // ✅ すでに選択済み避難所がある場合はマーカーを再描画
+  if (selectedShelterFeature) {
+    const [lng, lat] = selectedShelterFeature.geometry.coordinates;
+    if (selectedShelterMarker) {
+      map.removeLayer(selectedShelterMarker);
+    }
+    selectedShelterMarker = L.circleMarker([lat, lng], {
+      radius: 10,
+      color: '#3399ff',
+      weight: 3,
+      fillOpacity: 0.6
+    }).addTo(map);
+  }
 
   document.getElementById('route-warning').style.display = 'none';
 
