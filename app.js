@@ -73,9 +73,9 @@ navigator.geolocation.getCurrentPosition(success => {
 function loadAllGeoJSON() {
   loadHazardLayer('flood_under50', 'data/flood_under50.geojson', '#F6F599');
   loadHazardLayer('flood_over50', 'data/flood_over50.geojson', '#FFCEB3');
-  loadHazardLayer('sediment', 'data/sediment.geojson', '#F61F15');
-  loadHazardLayer('tsunami', 'data/tsunami.geojson', '#FFFFAA');
-  loadHazardLayer('inlandFlood', 'data/inland_flood.geojson', '#FFFFAA');
+  loadHazardLayer('sediment', 'data/sediment.geojson', '#8B4513');
+  loadHazardLayer('tsunami', 'data/tsunami.geojson', '#B22222');
+  loadHazardLayer('inlandFlood', 'data/inland_flood.geojson', '#00BFFF');
   loadShelters('data/shelters.json');
 }
 

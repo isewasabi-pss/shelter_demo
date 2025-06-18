@@ -133,7 +133,7 @@ html, body {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin: 4px 0;
+  margin: 1px 0;
 }
 
 .color-box {

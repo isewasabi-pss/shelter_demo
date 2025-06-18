@@ -21,37 +21,55 @@
 
   <!-- コントロールパネル -->
   <div id="control-panel">
-    <h2>ハザードマップ</h2>
+    <h2>リスク回避ルート</h2>
 
     <!-- ✅ label構造修正済み（カラーボックス付き） -->
     <label class="hazard-item">
       <input type="checkbox" id="flood_under50Layer" />
       <span class="color-box" style="background:#F6F599"></span>
-      浸水想定区域（〜50cm）
+      浸水リスク（50cm未満）
     </label><br/>
 
     <label class="hazard-item">
       <input type="checkbox" id="flood_over50Layer" />
       <span class="color-box" style="background:#FFCEB3"></span>
-      浸水想定区域（50cm〜）
+      浸水リスク（50cm以上）
     </label><br/>
 
     <label class="hazard-item">
       <input type="checkbox" id="sedimentLayer" />
-      <span class="color-box" style="background:#F61F15"></span>
-      土砂災害警戒区域
+      <span class="color-box" style="background:#8B4513"></span>
+      土砂災害リスク
     </label><br/>
 
     <label class="hazard-item">
       <input type="checkbox" id="tsunamiLayer" />
-      <span class="color-box" style="background:#FFFFAA"></span>
-      津波浸水想定区域
+      <span class="color-box" style="background:#B22222"></span>
+      津波浸水リスク
     </label><br/>
 
     <label class="hazard-item">
       <input type="checkbox" id="inlandFloodLayer" />
-      <span class="color-box" style="background:#FFFFAA"></span>
-      内水氾濫浸水想定区域
+      <span class="color-box" style="background:#00BFFF"></span>
+      内水氾濫浸リスク
+    </label><br/>
+
+    <label class="hazard-item">
+      <input type="checkbox" id="heatstrokeRiskLayer" disabled />
+      <span class="color-box" style="background:#66CDAA"></span>
+      熱中症リスク
+    </label><br/>
+
+    <label class="hazard-item">
+      <input type="checkbox" id="dryRouteLayer" disabled />
+      <span class="color-box" style="background:#87CEFA"></span>
+      雨に濡れにくい
+    </label><br/>
+
+    <label class="hazard-item">
+      <input type="checkbox" id="flatRouteLayer" disabled />
+      <span class="color-box" style="background:#A9A9A9"></span>
+      坂道少ない
     </label><br/>
 
     <!-- ✅ 経路検索ボタンをリストの上に配置 -->
